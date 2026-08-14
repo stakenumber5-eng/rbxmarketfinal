@@ -1,35 +1,34 @@
-import type { ReactNode } from "react";
-
-type ProductCardProps = {
-  name: string;
-  category: string;
-  price: number;
-  stock: number | string;
-  emoji: ReactNode;
-};
-
-export default function ProductCard({
-  name,
-  category,
-  price,
-  stock,
-  emoji,
-}: ProductCardProps) {
-  return (
-    <div className="card">
-      <div className="thumb">{emoji}</div>
-
-      <div className="body">
-        <small>{category}</small>
-
-        <h3>{name}</h3>
-
-        <p>Stock: {stock}</p>
-
-        <strong>${price.toFixed(2)}</strong>
-
-        <button type="button">Buy / Claim</button>
-      </div>
-    </div>
-  );
-}
+export const products = [
+  {
+    id: 1,
+    name: "Frost Dragon",
+    category: "Adopt Me",
+    price: 4.99,
+    stock: 12,
+    emoji: "🐉",
+  },
+  {
+    id: 2,
+    name: "Mega Neon Pet",
+    category: "Adopt Me",
+    price: 9.99,
+    stock: 6,
+    emoji: "✨",
+  },
+  {
+    id: 3,
+    name: "Chroma Knife",
+    category: "MM2",
+    price: 6.99,
+    stock: 8,
+    emoji: "🔪",
+  },
+  {
+    id: 4,
+    name: "1,000 Robux",
+    category: "Robux",
+    price: 9.99,
+    stock: "∞",
+    emoji: "🪙",
+  },
+];
