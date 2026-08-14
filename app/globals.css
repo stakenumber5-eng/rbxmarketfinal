@@ -211,3 +211,176 @@ main {
     grid-template-columns: 1fr;
   }
 }
+/* HEADER */
+
+.site-header {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  border-bottom: 1px solid #202631;
+  background: rgba(7, 9, 13, 0.82);
+  backdrop-filter: blur(18px);
+}
+
+.header-inner {
+  height: 64px;
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 0 28px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.logo {
+  font-size: 20px;
+  font-weight: 900;
+  letter-spacing: -1px;
+}
+
+.logo span {
+  color: #ff3048;
+}
+
+.nav {
+  display: flex;
+  gap: 30px;
+}
+
+.nav a,
+.header-actions a {
+  color: #9ba5b5;
+  font-size: 14px;
+  transition: color 0.2s;
+}
+
+.nav a:hover,
+.header-actions a:hover {
+  color: white;
+}
+
+.header-actions {
+  display: flex;
+  gap: 18px;
+}
+
+/* HERO */
+
+.hero-content {
+  position: relative;
+  z-index: 2;
+  max-width: 620px;
+}
+
+.eyebrow {
+  color: #ff3048;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 1px;
+  margin-bottom: 12px;
+}
+
+.hero h1 span {
+  color: #ff3048;
+}
+
+.hero-buttons {
+  display: flex;
+  gap: 12px;
+  margin-top: 28px;
+}
+
+.primary-button,
+.secondary-button {
+  padding: 12px 18px;
+  border-radius: 9px;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.primary-button {
+  background: #ff3048;
+  color: white;
+}
+
+.secondary-button {
+  border: 1px solid #303846;
+  background: #11161e;
+  color: white;
+}
+
+/* PRODUCTS */
+
+.section-heading {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  margin-bottom: 24px;
+}
+
+.section-heading h2 {
+  margin: 0;
+  font-size: 28px;
+}
+
+.category-buttons {
+  display: flex;
+  gap: 8px;
+}
+
+.category-buttons button {
+  border: 1px solid #2b3442;
+  background: #10151d;
+  color: #aab3c2;
+  padding: 8px 14px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.category-buttons button.active,
+.category-buttons button:hover {
+  background: #ff3048;
+  border-color: #ff3048;
+  color: white;
+}
+
+/* PRODUCT GRID */
+
+.products-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 16px;
+}
+
+@media (max-width: 1100px) {
+  .products-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .nav {
+    gap: 15px;
+  }
+}
+
+@media (max-width: 700px) {
+  .header-inner {
+    padding: 0 16px;
+  }
+
+  .nav {
+    display: none;
+  }
+
+  .products-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .section-heading {
+    display: block;
+  }
+
+  .category-buttons {
+    margin-top: 15px;
+    flex-wrap: wrap;
+  }
+}
