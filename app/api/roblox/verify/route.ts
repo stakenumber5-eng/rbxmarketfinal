@@ -2,23 +2,16 @@ import { NextRequest, NextResponse } from "next/server";
 
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json();
-
-    const username = String(body.username || "").trim();
-    const verificationCode = String(
-      body.verificationCode || ""
-    ).trim();
+    const { username, verificationCode } = await request.json();
 
     if (!username || !verificationCode) {
       return NextResponse.json(
-        {
-          error: "Username and verification code are required.",
-        },
+        { error: "Username and verification code are required." },
         { status: 400 }
       );
     }
 
-    // Find the Roblox user by username.
+    // 1. Find Roblox user
     const userResponse = await fetch(
       "https://users.roblox.com/v1/usernames/users",
       {
@@ -36,9 +29,7 @@ export async function POST(request: NextRequest) {
 
     if (!userResponse.ok) {
       return NextResponse.json(
-        {
-          error: "Unable to contact Roblox.",
-        },
+        { error: "Could not contact Roblox." },
         { status: 502 }
       );
     }
@@ -48,37 +39,39 @@ export async function POST(request: NextRequest) {
 
     if (!user) {
       return NextResponse.json(
-        {
-          error: "Roblox username not found.",
-        },
+        { error: "Roblox username not found." },
         { status: 404 }
       );
     }
 
-    // Get the Roblox avatar.
+    // 2. Get avatar
     const avatarResponse = await fetch(
       `https://thumbnails.roblox.com/v1/users/avatar-headshot?userIds=${user.id}&size=150x150&format=Png&isCircular=true`,
-      {
-        cache: "no-store",
-      }
+      { cache: "no-store" }
     );
 
-    let avatarUrl: string | null = null;
+    const avatarData = avatarResponse.ok
+      ? await avatarResponse.json()
+      : null;
 
-    if (avatarResponse.ok) {
-      const avatarData = await avatarResponse.json();
-      avatarUrl = avatarData?.data?.[0]?.imageUrl ?? null;
-    }
+    const avatarUrl =
+      avatarData?.data?.[0]?.imageUrl ?? null;
 
     /*
-     * BIO VERIFICATION
+     * 3. ABOUT VERIFICATION
      *
-     * The generated verificationCode needs to be checked
-     * against the Roblox profile About/Bio here.
+     * This is intentionally NOT implemented with a Roblox
+     * session cookie in source code.
      *
-     * Do NOT put a Roblox session cookie in this source file.
-     * We will keep any server credential in a Vercel
-     * Environment Variable.
+     * We need a supported authenticated Roblox API method
+     * to retrieve the user's About/description.
+     *
+     * Once that is available:
+     *
+     * const about = await getRobloxAbout(user.id);
+     *
+     * const verified =
+     *   about.trim() === verificationCode.trim();
      */
 
     return NextResponse.json({
@@ -86,15 +79,12 @@ export async function POST(request: NextRequest) {
       username: user.name,
       userId: user.id,
       avatarUrl,
-      verificationCode,
       message:
-        "Roblox account found. Add the verification code to the Roblox About/Bio, then verify again.",
+        "Account found. About verification still needs an authenticated Roblox API connection.",
     });
   } catch {
     return NextResponse.json(
-      {
-        error: "Something went wrong.",
-      },
+      { error: "Something went wrong." },
       { status: 500 }
     );
   }
