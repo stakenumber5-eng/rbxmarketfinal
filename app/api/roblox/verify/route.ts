@@ -1,119 +1,55 @@
-import { NextResponse } from "next/server";
+async function generateCode() {
+  const cleanUsername = username.trim();
 
-const WORDS = [
-  "red",
-  "blue",
-  "shadow",
-  "storm",
-  "pixel",
-  "nova",
-  "alpha",
-  "rapid",
-  "frost",
-  "neon",
-  "orbit",
-  "lunar",
-  "rocket",
-  "silver",
-  "gold",
-  "dark",
-  "bright",
-  "wild",
-  "royal",
-  "phantom",
-  "crimson",
-  "dragon",
-  "tiger",
-  "wolf",
-  "eagle",
-  "star",
-  "cosmic",
-  "fire",
-  "ice",
-  "thunder",
-];
-
-function generateWords(count: number) {
-  const result: string[] = [];
-
-  for (let i = 0; i < count; i++) {
-    const word = WORDS[Math.floor(Math.random() * WORDS.length)];
-    result.push(word);
+  if (!cleanUsername) {
+    setMessage("Enter your Roblox username first.");
+    return;
   }
 
-  return result;
-}
+  setLoading(true);
+  setMessage("");
 
-export async function POST(request: Request) {
   try {
-    const body = await request.json();
-
-    const username = body?.username?.trim();
-
-    if (!username) {
-      return NextResponse.json(
-        {
-          error: "Roblox username is required.",
-        },
-        { status: 400 }
-      );
-    }
-
-    const robloxResponse = await fetch(
-      "https://users.roblox.com/v1/usernames/users",
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          usernames: [username],
-          excludeBannedUsers: false,
-        }),
-        cache: "no-store",
-      }
-    );
-
-    if (!robloxResponse.ok) {
-      return NextResponse.json(
-        {
-          error: "Roblox username lookup failed.",
-          status: robloxResponse.status,
-        },
-        { status: 502 }
-      );
-    }
-
-    const data = await robloxResponse.json();
-
-    if (!data.data || data.data.length === 0) {
-      return NextResponse.json(
-        {
-          error: "Roblox user was not found.",
-        },
-        { status: 404 }
-      );
-    }
-
-    const robloxUser = data.data[0];
-
-    const words = generateWords(8);
-
-    return NextResponse.json({
-      success: true,
-      username: robloxUser.name,
-      displayName: robloxUser.displayName,
-      userId: robloxUser.id,
-      words,
-    });
-  } catch (error) {
-    console.error("ROBLOX START ERROR:", error);
-
-    return NextResponse.json(
-      {
-        error: "Something went wrong while contacting Roblox.",
+    const response = await fetch("/api/roblox/start", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
       },
-      { status: 500 }
+      body: JSON.stringify({
+        username: cleanUsername,
+      }),
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.error || "Could not generate verification words.");
+    }
+
+    if (!data.words || !Array.isArray(data.words)) {
+      throw new Error("Roblox verification words were not returned.");
+    }
+
+    setVerificationCode(data.words.join(" "));
+
+    setUser({
+      username: data.username,
+      userId: data.userId,
+      avatarUrl: null,
+    });
+
+    setMessage(
+      "Your 8 verification words have been generated. Add them to your Roblox About/Bio."
     );
+  } catch (error) {
+    console.error("Generate verification error:", error);
+
+    setMessage(
+      error instanceof Error
+        ? error.message
+        : "Something went wrong."
+    );
+  } finally {
+    setLoading(false);
   }
 }
