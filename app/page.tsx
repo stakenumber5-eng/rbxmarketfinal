@@ -1,36 +1,38 @@
 import Link from "next/link";
-import ProductCard from "@/components/ProductCard";
-import { products } from "@/lib/products";
+import ProductCard from "../components/ProductCard";
+import { products } from "../lib/products";
 
 export default function Home() {
   return (
     <>
-      <header className="nav wrap">
-        <div className="logo">
-          RBLX<span>STORE</span>
-        </div>
+      <header className="site-header">
+        <div className="header-inner">
+          <Link href="/" className="logo">
+            RBLX<span>STORE</span>
+          </Link>
 
-        <nav className="links">
-          <a href="#products">Robux</a>
-          <a href="#products">Adopt Me</a>
-          <a href="#products">MM2</a>
-        </nav>
+          <nav className="nav">
+            <Link href="/?category=Robux">Robux</Link>
+            <Link href="/?category=Adopt%20Me">Adopt Me</Link>
+            <Link href="/?category=MM2">MM2</Link>
+          </nav>
 
-        <div>
-          <Link href="/login">Login</Link>{" "}
-          <Link href="/admin">Developer</Link>
+          <div className="header-actions">
+            <Link href="/login">Login</Link>
+            <Link href="/admin">Developer</Link>
+          </div>
         </div>
       </header>
 
       <main>
-        <section className="hero wrap">
-          <div>
-            <small>FAST • SIMPLE • SECURE</small>
+        <section className="hero">
+          <div className="hero-content">
+            <div className="eyebrow">FAST • SIMPLE • SECURE</div>
 
             <h1>
               Your Roblox
               <br />
-              <span style={{ color: "#ef3340" }}>marketplace.</span>
+              <span>marketplace.</span>
             </h1>
 
             <p>
@@ -38,35 +40,43 @@ export default function Home() {
               Delivery is manual for now.
             </p>
 
-            <div className="actions">
-              <a className="btn red" href="#products">
+            <div className="hero-buttons">
+              <Link href="#products" className="primary-button">
                 Browse products
-              </a>
+              </Link>
 
-              <a className="btn" href="/login">
+              <Link href="/login" className="secondary-button">
                 Verify Roblox
-              </a>
+              </Link>
             </div>
-          </div>
-
-          <div className="hero-art">
-            <div className="orb">R</div>
           </div>
         </section>
 
-        <section id="products" className="section wrap">
-          <h2>Featured products</h2>
+        <section id="products" className="products-section">
+          <div className="section-heading">
+            <div>
+              <div className="eyebrow">SHOP</div>
+              <h2>Featured products</h2>
+            </div>
 
-          <div className="tabs">
-            <span className="tab active">All</span>
-            <span className="tab">Robux</span>
-            <span className="tab">Adopt Me</span>
-            <span className="tab">MM2</span>
+            <div className="category-buttons">
+              <button className="active">All</button>
+              <button>Robux</button>
+              <button>Adopt Me</button>
+              <button>MM2</button>
+            </div>
           </div>
 
-          <div className="grid">
+          <div className="products-grid">
             {products.map((product) => (
-              <ProductCard key={product.id} {...product} />
+              <ProductCard
+                key={product.id}
+                name={product.name}
+                category={product.category}
+                price={product.price}
+                stock={product.stock}
+                emoji={product.emoji}
+              />
             ))}
           </div>
         </section>
