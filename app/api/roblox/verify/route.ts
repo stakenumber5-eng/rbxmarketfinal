@@ -1,90 +1,50 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 
-export async function POST(request: NextRequest) {
+export async function POST(request: Request) {
   try {
-    const { username, verificationCode } = await request.json();
+    const { userId, words } = await request.json();
 
-    if (!username || !verificationCode) {
+    if (!userId || !Array.isArray(words) || words.length !== 8) {
       return NextResponse.json(
-        { error: "Username and verification code are required." },
+        { error: "Invalid verification request." },
         { status: 400 }
       );
     }
 
-    // 1. Find Roblox user
-    const userResponse = await fetch(
-      "https://users.roblox.com/v1/usernames/users",
+    const response = await fetch(
+      `https://users.roblox.com/v1/users/${userId}`,
       {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          usernames: [username],
-          excludeBannedUsers: false,
-        }),
         cache: "no-store",
       }
     );
 
-    if (!userResponse.ok) {
+    if (!response.ok) {
       return NextResponse.json(
-        { error: "Could not contact Roblox." },
-        { status: 502 }
-      );
-    }
-
-    const userData = await userResponse.json();
-    const user = userData?.data?.[0];
-
-    if (!user) {
-      return NextResponse.json(
-        { error: "Roblox username not found." },
+        { error: "Could not find Roblox profile." },
         { status: 404 }
       );
     }
 
-    // 2. Get avatar
-    const avatarResponse = await fetch(
-      `https://thumbnails.roblox.com/v1/users/avatar-headshot?userIds=${user.id}&size=150x150&format=Png&isCircular=true`,
-      { cache: "no-store" }
+    const user = await response.json();
+
+    const about = String(user.description || "").toLowerCase();
+
+    const requiredWords = words.map((word: string) =>
+      word.toLowerCase().trim()
     );
 
-    const avatarData = avatarResponse.ok
-      ? await avatarResponse.json()
-      : null;
-
-    const avatarUrl =
-      avatarData?.data?.[0]?.imageUrl ?? null;
-
-    /*
-     * 3. ABOUT VERIFICATION
-     *
-     * This is intentionally NOT implemented with a Roblox
-     * session cookie in source code.
-     *
-     * We need a supported authenticated Roblox API method
-     * to retrieve the user's About/description.
-     *
-     * Once that is available:
-     *
-     * const about = await getRobloxAbout(user.id);
-     *
-     * const verified =
-     *   about.trim() === verificationCode.trim();
-     */
+    const verified = requiredWords.every((word: string) =>
+      about.includes(word)
+    );
 
     return NextResponse.json({
-      verified: false,
+      verified,
       username: user.name,
       userId: user.id,
-      avatarUrl,
-      message:
-        "Account found. About verification still needs an authenticated Roblox API connection.",
     });
   } catch {
     return NextResponse.json(
-      { error: "Something went wrong." },
+      { error: "Verification failed." },
       { status: 500 }
     );
   }
