@@ -12,17 +12,21 @@ export default function LoginPage() {
   const [username, setUsername] = useState("");
   const [verificationCode, setVerificationCode] = useState("");
   const [user, setUser] = useState<RobloxUser | null>(null);
+  const [verified, setVerified] = useState(false);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
 
   async function generateCode() {
-    if (!username.trim()) {
+    const cleanUsername = username.trim();
+
+    if (!cleanUsername) {
       setMessage("Enter your Roblox username first.");
       return;
     }
 
     setLoading(true);
     setMessage("");
+    setVerified(false);
 
     try {
       const response = await fetch("/api/roblox/start", {
@@ -31,18 +35,27 @@ export default function LoginPage() {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          username: username.trim(),
+          username: cleanUsername,
         }),
       });
 
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.error || "Could not generate verification words.");
+        throw new Error(
+          data.error || "Could not generate verification words."
+        );
+      }
+
+      if (!Array.isArray(data.words) || data.words.length !== 8) {
+        throw new Error(
+          "The server did not return exactly 8 verification words."
+        );
       }
 
       setVerificationCode(data.words.join(" "));
 
+      // Account found ≠ verified.
       setUser({
         username: data.username,
         userId: data.userId,
@@ -50,9 +63,11 @@ export default function LoginPage() {
       });
 
       setMessage(
-        "Your 8 verification words have been generated. Add them to your Roblox About/Bio."
+        "8 verification words generated. Add them to your Roblox About/Bio, then click Verify."
       );
     } catch (error) {
+      console.error("Generate verification error:", error);
+
       setMessage(
         error instanceof Error
           ? error.message
@@ -92,33 +107,28 @@ export default function LoginPage() {
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.error || "Verification failed.");
+        throw new Error(
+          data.error || "Verification failed."
+        );
       }
 
+      // Verification failed.
       if (!data.verified) {
+        setVerified(false);
+
         setMessage(
           "Verification failed. Make sure all 8 words are in your Roblox About/Bio."
         );
+
         return;
       }
 
-      // Get Roblox avatar
-      let avatarUrl: string | null = null;
+      // ONLY successful verification reaches this point.
+      setVerified(true);
 
-      try {
-        const avatarResponse = await fetch(
-          `https://thumbnails.roblox.com/v1/users/avatar-headshot?userIds=${user.userId}&size=150x150&format=Png&isCircular=false`
-        );
-
-        if (avatarResponse.ok) {
-          const avatarData = await avatarResponse.json();
-
-          avatarUrl =
-            avatarData.data?.[0]?.imageUrl || null;
-        }
-      } catch {
-        // Avatar loading failed, but verification can still succeed.
-      }
+      // Roblox avatar.
+      const avatarUrl =
+        `https://www.roblox.com/headshot-thumbnail/image?userId=${user.userId}&width=150&height=150&format=png`;
 
       setUser({
         username: data.username || user.username,
@@ -126,8 +136,14 @@ export default function LoginPage() {
         avatarUrl,
       });
 
-      setMessage("✓ Roblox account successfully verified!");
+      setMessage(
+        "✓ Roblox account successfully verified!"
+      );
     } catch (error) {
+      console.error("Verification error:", error);
+
+      setVerified(false);
+
       setMessage(
         error instanceof Error
           ? error.message
@@ -142,6 +158,7 @@ export default function LoginPage() {
     if (!verificationCode) return;
 
     navigator.clipboard.writeText(verificationCode);
+
     setMessage("Verification words copied!");
   }
 
@@ -175,10 +192,12 @@ export default function LoginPage() {
 
       {/* MAIN */}
       <section className="verify-container">
-        {/* LEFT */}
+        {/* LEFT SIDE */}
         <div className="verify-content">
           <div className="verify-title">
-            <div className="shield-icon">✓</div>
+            <div className="shield-icon">
+              ✓
+            </div>
 
             <div>
               <h1>
@@ -186,8 +205,8 @@ export default function LoginPage() {
               </h1>
 
               <p>
-                Follow the steps below to verify your Roblox account and
-                unlock full access.
+                Follow the steps below to verify your Roblox
+                account and unlock full access.
               </p>
             </div>
           </div>
@@ -197,9 +216,13 @@ export default function LoginPage() {
           {/* STEP 1 */}
           <section className="verify-step">
             <div className="step-title">
-              <span className="step-number">1</span>
+              <span className="step-number">
+                1
+              </span>
 
-              <h2>Enter your Roblox username</h2>
+              <h2>
+                Enter your Roblox username
+              </h2>
             </div>
 
             <input
@@ -207,7 +230,9 @@ export default function LoginPage() {
               type="text"
               placeholder="Roblox username"
               value={username}
-              onChange={(e) => setUsername(e.target.value)}
+              onChange={(e) =>
+                setUsername(e.target.value)
+              }
               disabled={loading}
             />
 
@@ -227,26 +252,31 @@ export default function LoginPage() {
           {/* STEP 2 */}
           <section className="verify-step">
             <div className="step-title">
-              <span className="step-number">2</span>
+              <span className="step-number">
+                2
+              </span>
 
-              <h2>Add the words to your Roblox About/Bio</h2>
+              <h2>
+                Add the words to your Roblox About/Bio
+              </h2>
             </div>
 
             <p className="step-description">
-              Copy the 8 words below and paste them exactly in your Roblox
-              profile About/Bio.
+              Copy the 8 words below and paste them
+              exactly into your Roblox profile About/Bio.
             </p>
 
             <div className="code-box">
               <strong>
-                {verificationCode || "Generate your verification words"}
+                {verificationCode ||
+                  "Generate your verification words"}
               </strong>
 
               {verificationCode && (
                 <button
+                  type="button"
                   onClick={copyCode}
                   className="copy-button"
-                  type="button"
                 >
                   ▣
                 </button>
@@ -254,7 +284,8 @@ export default function LoginPage() {
             </div>
 
             <p className="info-text">
-              ⓘ Make sure all 8 words are added to your About/Bio.
+              ⓘ Make sure all 8 words are added to your
+              Roblox About/Bio.
             </p>
           </section>
 
@@ -263,20 +294,29 @@ export default function LoginPage() {
           {/* STEP 3 */}
           <section className="verify-step">
             <div className="step-title">
-              <span className="step-number">3</span>
+              <span className="step-number">
+                3
+              </span>
 
-              <h2>Verify your account</h2>
+              <h2>
+                Verify your account
+              </h2>
             </div>
 
             <p className="step-description">
-              After adding the words to your Roblox About/Bio, click the
-              button below to verify ownership.
+              After adding the words to your Roblox
+              About/Bio, click the button below to verify
+              ownership.
             </p>
 
             <button
               className="verify-button"
               onClick={verifyAccount}
-              disabled={loading || !verificationCode || !user}
+              disabled={
+                loading ||
+                !verificationCode ||
+                !user
+              }
             >
               {loading
                 ? "Checking Roblox..."
@@ -296,38 +336,55 @@ export default function LoginPage() {
           </section>
         </div>
 
-        {/* RIGHT SIDEBAR */}
+        {/* RIGHT SIDE */}
         <aside className="verify-sidebar">
-          <h2>Verification Status</h2>
+          <h2>
+            Verification Status
+          </h2>
 
-          <div className={`status-pill ${user?.avatarUrl ? "verified" : ""}`}>
-            {user?.avatarUrl ? "✓ Verified" : "Not Verified"}
+          {/* STATUS */}
+          <div
+            className={`status-pill ${
+              verified ? "verified" : ""
+            }`}
+          >
+            {verified
+              ? "✓ Verified"
+              : "Not Verified"}
           </div>
 
+          {/* AVATAR */}
           <div className="avatar-container">
-            {user?.avatarUrl ? (
+            {verified && user?.avatarUrl ? (
               <img
                 src={user.avatarUrl}
                 alt={`${user.username} Roblox avatar`}
               />
             ) : (
-              <div className="empty-avatar">R</div>
+              <div className="empty-avatar">
+                R
+              </div>
             )}
           </div>
 
+          {/* USER INFO */}
           {user ? (
             <>
-              <h3>{user.username}</h3>
+              <h3>
+                {user.username}
+              </h3>
 
               <p>
-                {user.avatarUrl
+                {verified
                   ? "Roblox account verified"
                   : "Roblox account found"}
               </p>
             </>
           ) : (
             <>
-              <h3>No user selected</h3>
+              <h3>
+                No user selected
+              </h3>
 
               <p>
                 Enter your Roblox username to get started.
@@ -335,12 +392,15 @@ export default function LoginPage() {
             </>
           )}
 
+          {/* SECURITY */}
           <div className="security-card">
             <div className="security-item">
               <span>🛡</span>
 
               <div>
-                <strong>Secure & Private</strong>
+                <strong>
+                  Secure & Private
+                </strong>
 
                 <p>
                   We only check your public About/Bio.
@@ -352,7 +412,9 @@ export default function LoginPage() {
               <span>🔒</span>
 
               <div>
-                <strong>No Password Required</strong>
+                <strong>
+                  No Password Required
+                </strong>
 
                 <p>
                   Your account stays completely safe.
@@ -364,10 +426,13 @@ export default function LoginPage() {
               <span>✓</span>
 
               <div>
-                <strong>Trusted Verification</strong>
+                <strong>
+                  Trusted Verification
+                </strong>
 
                 <p>
-                  Verify ownership without sharing credentials.
+                  Verify ownership without sharing
+                  credentials.
                 </p>
               </div>
             </div>
