@@ -74,11 +74,10 @@ type LoggedInUser = {
 };
 
 export default function HomePage() {
-  const [loggedInUser, setLoggedInUser] =
-    useState<LoggedInUser | null>(null);
-
-  const [sessionLoading, setSessionLoading] =
-    useState(true);
+  const [loggedInUser, setLoggedInUser] = useState<LoggedInUser | null>(
+    null
+  );
+  const [sessionLoading, setSessionLoading] = useState(true);
 
   useEffect(() => {
     async function loadSession() {
@@ -95,10 +94,7 @@ export default function HomePage() {
 
         const data = await response.json();
 
-        if (
-          data?.loggedIn === true &&
-          data?.user
-        ) {
+        if (data?.loggedIn === true && data?.user) {
           setLoggedInUser({
             userId: data.user.userId,
             username: data.user.username,
@@ -108,11 +104,7 @@ export default function HomePage() {
           setLoggedInUser(null);
         }
       } catch (error) {
-        console.error(
-          "Could not load saved session:",
-          error
-        );
-
+        console.error("Could not load saved session:", error);
         setLoggedInUser(null);
       } finally {
         setSessionLoading(false);
@@ -124,12 +116,9 @@ export default function HomePage() {
 
   return (
     <main className="home-page">
-
-      {/* NAVBAR */}
       <header className="home-header">
         <Link href="/" className="brand">
           <div className="brand-logo">R</div>
-
           <div className="brand-text">
             RBX<span>MARKET</span>
           </div>
@@ -139,47 +128,26 @@ export default function HomePage() {
           <Link href="/" className="active">
             Home
           </Link>
-
-          <Link href="/browse">
-            Browse
-          </Link>
-
-          <Link href="/login">
-            How It Works
-          </Link>
-
-          <Link href="/reviews">
-            Reviews
-          </Link>
-
-          <Link href="/support">
-            Support
-          </Link>
+          <Link href="/browse">Browse</Link>
+          <Link href="/login">How It Works</Link>
+          <Link href="/reviews">Reviews</Link>
+          <Link href="/support">Support</Link>
         </nav>
 
-        {/* TOP RIGHT ACCOUNT AREA */}
         <div className="header-actions">
-
           {sessionLoading ? (
-            <span className="login-button">
-              Loading...
-            </span>
+            <span className="login-button">Loading...</span>
           ) : loggedInUser ? (
-            <Link
-              href="/login"
-              className="logged-in-user"
-            >
+            <Link href="/login" className="logged-in-user">
               <div className="header-avatar">
                 {loggedInUser.avatarUrl ? (
                   <img
                     src={loggedInUser.avatarUrl}
-                    alt={loggedInUser.username + " Roblox avatar"}
+                    alt={`${loggedInUser.username} Roblox avatar`}
                   />
                 ) : (
                   <span>
-                    {loggedInUser.username
-                      .charAt(0)
-                      .toUpperCase()}
+                    {loggedInUser.username.charAt(0).toUpperCase()}
                   </span>
                 )}
               </div>
@@ -188,37 +156,26 @@ export default function HomePage() {
                 {loggedInUser.username}
               </span>
 
-              <span className="header-arrow">
-                ▾
-              </span>
+              <span className="header-arrow">▾</span>
             </Link>
           ) : (
             <>
-              <Link
-                href="/login"
-                className="login-button"
-              >
+              <Link href="/login" className="login-button">
                 Login
               </Link>
 
-              <Link
-                href="/login"
-                className="verify-button"
-              >
+              <Link href="/login" className="verify-button">
                 🛡 Verify Roblox
               </Link>
             </>
           )}
-
         </div>
       </header>
 
-      {/* HERO */}
       <section className="hero-section">
         <div className="hero-glow" />
 
         <div className="hero-content">
-
           <div className="trusted-badge">
             <span className="green-dot" />
             Trusted by 10,000+ Roblox players
@@ -237,20 +194,12 @@ export default function HomePage() {
           </p>
 
           <div className="hero-buttons">
-            <Link
-              href="/browse"
-              className="primary-button"
-            >
-              Browse All Products
-              <span>→</span>
+            <Link href="/browse" className="primary-button">
+              Browse All Products <span>→</span>
             </Link>
 
-            <Link
-              href="/login"
-              className="secondary-button"
-            >
-              <span>▶</span>
-              How It Works
+            <Link href="/login" className="secondary-button">
+              <span>▶</span> How It Works
             </Link>
           </div>
 
@@ -261,16 +210,13 @@ export default function HomePage() {
           </div>
         </div>
 
-        {/* HERO VISUAL */}
         <div className="hero-visual">
-
           <div className="hero-circle hero-circle-one" />
           <div className="hero-circle hero-circle-two" />
 
           <div className="roblox-character">
             <div className="character-head">
               <div className="character-hair" />
-
               <div className="character-face">
                 <span className="eye left-eye" />
                 <span className="eye right-eye" />
@@ -279,50 +225,30 @@ export default function HomePage() {
             </div>
 
             <div className="character-body">
-              <div className="character-logo">
-                R
-              </div>
+              <div className="character-logo">R</div>
             </div>
 
             <div className="character-leg left-leg" />
             <div className="character-leg right-leg" />
 
-            <div className="character-sword">
-              ⚔
-            </div>
+            <div className="character-sword">⚔</div>
           </div>
 
           <div className="security-floating-card">
-            <div className="security-icon">
-              🛡
-            </div>
-
+            <div className="security-icon">🛡</div>
             <div>
               <strong>100% Secure</strong>
-
-              <p>
-                Your account is safe with our
-                verification system.
-              </p>
+              <p>Your account is safe with our verification system.</p>
             </div>
           </div>
-
         </div>
       </section>
 
-      {/* CATEGORIES */}
       <section className="categories-section">
-
-        <div className="section-label">
-          SHOP BY CATEGORY
-        </div>
-
-        <h2>
-          Explore Our Top Categories
-        </h2>
+        <div className="section-label">SHOP BY CATEGORY</div>
+        <h2>Explore Our Top Categories</h2>
 
         <div className="category-grid">
-
           {categories.map((category) => (
             <Link
               href={category.href}
@@ -330,53 +256,33 @@ export default function HomePage() {
               className={`category-card ${category.className}`}
             >
               <div className="category-content">
-
-                <h3>
-                  {category.title}
-                </h3>
-
-                <p>
-                  {category.description}
-                </p>
+                <h3>{category.title}</h3>
+                <p>{category.description}</p>
 
                 <span className="category-button">
-                  Shop {category.title}
-                  <b>→</b>
+                  Shop {category.title} <b>→</b>
                 </span>
-
               </div>
 
-              <div className="category-icon">
-                {category.icon}
-              </div>
+              <div className="category-icon">{category.icon}</div>
             </Link>
           ))}
-
         </div>
       </section>
 
-      {/* PRODUCTS */}
       <section className="products-section">
-
-        <div className="section-label">
-          FEATURED ITEMS
-        </div>
+        <div className="section-label">FEATURED ITEMS</div>
 
         <div className="products-heading">
-
-          <h2>
-            Popular Right Now
-          </h2>
+          <h2>Popular Right Now</h2>
 
           <div className="slider-buttons">
-            <button>←</button>
-            <button>→</button>
+            <button type="button">←</button>
+            <button type="button">→</button>
           </div>
-
         </div>
 
         <div className="products-grid">
-
           {products.map((product) => (
             <Link
               href="/browse"
@@ -384,108 +290,63 @@ export default function HomePage() {
               key={product.name}
             >
               <div className="product-image">
-                <span>
-                  {product.icon}
-                </span>
+                <span>{product.icon}</span>
               </div>
 
               <div className="product-info">
-
-                <h3>
-                  {product.name}
-                </h3>
-
-                <p>
-                  {product.category}
-                </p>
-
-                <strong>
-                  {product.price}
-                </strong>
-
+                <h3>{product.name}</h3>
+                <p>{product.category}</p>
+                <strong>{product.price}</strong>
               </div>
             </Link>
           ))}
-
         </div>
       </section>
 
-      {/* BENEFITS */}
       <section className="benefits-section">
-
         <div className="benefit">
-          <div className="benefit-icon">
-            🛡
-          </div>
-
+          <div className="benefit-icon">🛡</div>
           <div>
-            <h3>
-              Safe & Secure
-            </h3>
-
+            <h3>Safe & Secure</h3>
             <p>
-              We use advanced verification systems
-              to keep your account and purchases safe.
+              We use advanced verification systems to keep your account
+              and purchases safe.
             </p>
           </div>
         </div>
 
         <div className="benefit">
-          <div className="benefit-icon">
-            ⚡
-          </div>
-
+          <div className="benefit-icon">⚡</div>
           <div>
-            <h3>
-              Instant Delivery
-            </h3>
-
+            <h3>Instant Delivery</h3>
             <p>
-              Most items are delivered quickly
-              through our marketplace system.
+              Most items are delivered quickly through our marketplace
+              system.
             </p>
           </div>
         </div>
 
         <div className="benefit">
-          <div className="benefit-icon">
-            🎧
-          </div>
-
+          <div className="benefit-icon">🎧</div>
           <div>
-            <h3>
-              24/7 Support
-            </h3>
-
+            <h3>24/7 Support</h3>
             <p>
-              Our support team is ready to help
-              whenever you need assistance.
+              Our support team is ready to help whenever you need
+              assistance.
             </p>
           </div>
         </div>
 
         <div className="benefit">
-          <div className="benefit-icon">
-            👥
-          </div>
-
+          <div className="benefit-icon">👥</div>
           <div>
-            <h3>
-              Trusted By Thousands
-            </h3>
-
-            <p>
-              Join thousands of customers who
-              use RBXMARKET.
-            </p>
+            <h3>Trusted By Thousands</h3>
+            <p>Join thousands of customers who use RBXMARKET.</p>
           </div>
         </div>
-
       </section>
 
-      {/* STATS */}
       <section className="stats-section">
-
         <div className="stat">
           <strong>10,000+</strong>
           <span>Happy Customers</span>
@@ -505,27 +366,20 @@ export default function HomePage() {
           <strong>24/7</strong>
           <span>Customer Support</span>
         </div>
-
       </section>
 
-      {/* FOOTER */}
       <footer className="home-footer">
-
         <div className="footer-brand">
-
           <Link href="/" className="brand">
-            <div className="brand-logo">
-              R
-            </div>
-
+            <div className="brand-logo">R</div>
             <div className="brand-text">
               RBX<span>MARKET</span>
             </div>
           </Link>
 
           <p>
-            The #1 Roblox marketplace to buy
-            Robux, Adopt Me pets, MM2 items and more.
+            The #1 Roblox marketplace to buy Robux, Adopt Me pets, MM2
+            items and more.
           </p>
 
           <div className="socials">
@@ -534,107 +388,52 @@ export default function HomePage() {
             <span>▶</span>
             <span>♪</span>
           </div>
-
         </div>
 
         <div className="footer-column">
-          <h3>
-            Marketplace
-          </h3>
-
-          <Link href="/browse">
-            Browse All
-          </Link>
-
-          <Link href="/browse?category=robux">
-            Robux
-          </Link>
-
-          <Link href="/browse?category=adopt-me">
-            Adopt Me
-          </Link>
-
-          <Link href="/browse?category=mm2">
-            MM2
-          </Link>
+          <h3>Marketplace</h3>
+          <Link href="/browse">Browse All</Link>
+          <Link href="/browse?category=robux">Robux</Link>
+          <Link href="/browse?category=adopt-me">Adopt Me</Link>
+          <Link href="/browse?category=mm2">MM2</Link>
         </div>
 
         <div className="footer-column">
-          <h3>
-            Info
-          </h3>
-
-          <Link href="/login">
-            How It Works
-          </Link>
-
-          <Link href="/terms">
-            Terms of Service
-          </Link>
-
-          <Link href="/privacy">
-            Privacy Policy
-          </Link>
-
-          <Link href="/refunds">
-            Refund Policy
-          </Link>
+          <h3>Info</h3>
+          <Link href="/login">How It Works</Link>
+          <Link href="/terms">Terms of Service</Link>
+          <Link href="/privacy">Privacy Policy</Link>
+          <Link href="/refunds">Refund Policy</Link>
         </div>
 
         <div className="footer-column">
-          <h3>
-            Support
-          </h3>
-
-          <Link href="/support">
-            Contact Us
-          </Link>
-
-          <Link href="/faq">
-            FAQ
-          </Link>
-
-          <Link href="/delivery">
-            Delivery Info
-          </Link>
+          <h3>Support</h3>
+          <Link href="/support">Contact Us</Link>
+          <Link href="/faq">FAQ</Link>
+          <Link href="/delivery">Delivery Info</Link>
         </div>
 
         <div className="footer-community">
-          <h3>
-            Join Our Community
-          </h3>
+          <h3>Join Our Community</h3>
 
           <p>
-            Stay updated with the latest news,
-            deals and giveaways.
+            Stay updated with the latest news, deals and giveaways.
           </p>
 
           <div className="email-box">
-            <input
-              type="email"
-              placeholder="Enter your email"
-            />
-
-            <button>
-              →
-            </button>
+            <input type="email" placeholder="Enter your email" />
+            <button type="button">→</button>
           </div>
         </div>
-
       </footer>
 
       <div className="footer-bottom">
-
-        <span>
-          © 2026 RBXMARKET. All rights reserved.
-        </span>
+        <span>© 2026 RBXMARKET. All rights reserved.</span>
 
         <span>
           This website is not affiliated with Roblox Corporation.
         </span>
-
       </div>
-
     </main>
   );
 }
