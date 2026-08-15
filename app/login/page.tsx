@@ -26,6 +26,8 @@ export default function LoginPage() {
 
     setLoading(true);
     setMessage("");
+
+    // Generating a code ALWAYS starts as unverified.
     setVerified(false);
 
     try {
@@ -55,7 +57,7 @@ export default function LoginPage() {
 
       setVerificationCode(data.words.join(" "));
 
-      // Account found ≠ verified.
+      // Finding the account does NOT mean verified.
       setUser({
         username: data.username,
         userId: data.userId,
@@ -112,23 +114,41 @@ export default function LoginPage() {
         );
       }
 
-      // Verification failed.
-      if (!data.verified) {
+      // IMPORTANT:
+      // Do not mark the account verified unless the API
+      // explicitly says verified === true.
+      if (data.verified !== true) {
         setVerified(false);
 
         setMessage(
-          "Verification failed. Make sure all 8 words are in your Roblox About/Bio."
+          "Not verified yet. Add all 8 words to your Roblox About/Bio and try again."
         );
 
         return;
       }
 
-      // ONLY successful verification reaches this point.
+      // Only HERE do we mark the account as verified.
       setVerified(true);
 
-      // Roblox avatar.
-      const avatarUrl =
-        `https://www.roblox.com/headshot-thumbnail/image?userId=${user.userId}&width=150&height=150&format=png`;
+      let avatarUrl: string | null = null;
+
+      try {
+        const avatarResponse = await fetch(
+          `https://thumbnails.roblox.com/v1/users/avatar-headshot?userIds=${user.userId}&size=150x150&format=Png&isCircular=false`
+        );
+
+        if (avatarResponse.ok) {
+          const avatarData = await avatarResponse.json();
+
+          avatarUrl =
+            avatarData.data?.[0]?.imageUrl || null;
+        }
+      } catch (avatarError) {
+        console.error(
+          "Avatar loading error:",
+          avatarError
+        );
+      }
 
       setUser({
         username: data.username || user.username,
@@ -192,7 +212,7 @@ export default function LoginPage() {
 
       {/* MAIN */}
       <section className="verify-container">
-        {/* LEFT SIDE */}
+        {/* LEFT */}
         <div className="verify-content">
           <div className="verify-title">
             <div className="shield-icon">
@@ -205,8 +225,8 @@ export default function LoginPage() {
               </h1>
 
               <p>
-                Follow the steps below to verify your Roblox
-                account and unlock full access.
+                Follow the steps below to verify your
+                Roblox account and unlock full access.
               </p>
             </div>
           </div>
@@ -263,7 +283,8 @@ export default function LoginPage() {
 
             <p className="step-description">
               Copy the 8 words below and paste them
-              exactly into your Roblox profile About/Bio.
+              exactly into your Roblox profile
+              About/Bio.
             </p>
 
             <div className="code-box">
@@ -284,8 +305,8 @@ export default function LoginPage() {
             </div>
 
             <p className="info-text">
-              ⓘ Make sure all 8 words are added to your
-              Roblox About/Bio.
+              ⓘ Add all 8 words to your Roblox About/Bio
+              before clicking Verify.
             </p>
           </section>
 
@@ -305,8 +326,7 @@ export default function LoginPage() {
 
             <p className="step-description">
               After adding the words to your Roblox
-              About/Bio, click the button below to verify
-              ownership.
+              About/Bio, click the button below.
             </p>
 
             <button
@@ -336,13 +356,13 @@ export default function LoginPage() {
           </section>
         </div>
 
-        {/* RIGHT SIDE */}
+        {/* RIGHT */}
         <aside className="verify-sidebar">
           <h2>
             Verification Status
           </h2>
 
-          {/* STATUS */}
+          {/* VERIFIED IS NOW CONTROLLED ONLY BY `verified` */}
           <div
             className={`status-pill ${
               verified ? "verified" : ""
@@ -353,7 +373,7 @@ export default function LoginPage() {
               : "Not Verified"}
           </div>
 
-          {/* AVATAR */}
+          {/* Avatar only appears after successful verification */}
           <div className="avatar-container">
             {verified && user?.avatarUrl ? (
               <img
@@ -367,7 +387,6 @@ export default function LoginPage() {
             )}
           </div>
 
-          {/* USER INFO */}
           {user ? (
             <>
               <h3>
@@ -377,7 +396,7 @@ export default function LoginPage() {
               <p>
                 {verified
                   ? "Roblox account verified"
-                  : "Roblox account found"}
+                  : "Roblox account found — not verified"}
               </p>
             </>
           ) : (
@@ -392,7 +411,6 @@ export default function LoginPage() {
             </>
           )}
 
-          {/* SECURITY */}
           <div className="security-card">
             <div className="security-item">
               <span>🛡</span>
