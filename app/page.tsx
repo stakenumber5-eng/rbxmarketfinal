@@ -173,7 +173,7 @@ export default function HomePage() {
                 {loggedInUser.avatarUrl ? (
                   <img
                     src={loggedInUser.avatarUrl}
-                    alt={`${loggedInUser.username} Roblox avatar`}
+                    alt={loggedInUser.username + " Roblox avatar"}
                   />
                 ) : (
                   <span>
