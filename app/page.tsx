@@ -1,6 +1,8 @@
+```tsx
 "use client";
 
 import Link from "next/link";
+import { useEffect, useState } from "react";
 
 const categories = [
   {
@@ -65,7 +67,61 @@ const products = [
   },
 ];
 
+type LoggedInUser = {
+  userId: number;
+  username: string;
+  avatarUrl: string | null;
+};
+
 export default function HomePage() {
+  const [loggedInUser, setLoggedInUser] =
+    useState<LoggedInUser | null>(null);
+
+  const [sessionLoading, setSessionLoading] =
+    useState(true);
+
+  useEffect(() => {
+    async function loadSession() {
+      try {
+        const response = await fetch("/api/auth/me", {
+          method: "GET",
+          cache: "no-store",
+        });
+
+        if (!response.ok) {
+          setLoggedInUser(null);
+          return;
+        }
+
+        const data = await response.json();
+
+        if (
+          data?.loggedIn === true &&
+          data?.user
+        ) {
+          setLoggedInUser({
+            userId: data.user.userId,
+            username: data.user.username,
+            avatarUrl: data.user.avatarUrl || null,
+          });
+        } else {
+          setLoggedInUser(null);
+        }
+      } catch (error) {
+        console.error(
+          "Could not load saved session:",
+          error
+        );
+
+        setLoggedInUser(null);
+      } finally {
+        setSessionLoading(false);
+      }
+    }
+
+    loadSession();
+  }, []);
+
   return (
     <main className="home-page">
 
@@ -101,14 +157,59 @@ export default function HomePage() {
           </Link>
         </nav>
 
+        {/* TOP RIGHT ACCOUNT AREA */}
         <div className="header-actions">
-          <Link href="/login" className="login-button">
-            Login
-          </Link>
 
-          <Link href="/login" className="verify-button">
-            🛡 Verify Roblox
-          </Link>
+          {sessionLoading ? (
+            <span className="login-button">
+              Loading...
+            </span>
+          ) : loggedInUser ? (
+            <Link
+              href="/login"
+              className="logged-in-user"
+            >
+              <div className="header-avatar">
+                {loggedInUser.avatarUrl ? (
+                  <img
+                    src={loggedInUser.avatarUrl}
+                    alt={`${loggedInUser.username} Roblox avatar`}
+                  />
+                ) : (
+                  <span>
+                    {loggedInUser.username
+                      .charAt(0)
+                      .toUpperCase()}
+                  </span>
+                )}
+              </div>
+
+              <span className="header-username">
+                {loggedInUser.username}
+              </span>
+
+              <span className="header-arrow">
+                ▾
+              </span>
+            </Link>
+          ) : (
+            <>
+              <Link
+                href="/login"
+                className="login-button"
+              >
+                Login
+              </Link>
+
+              <Link
+                href="/login"
+                className="verify-button"
+              >
+                🛡 Verify Roblox
+              </Link>
+            </>
+          )}
+
         </div>
       </header>
 
@@ -136,12 +237,18 @@ export default function HomePage() {
           </p>
 
           <div className="hero-buttons">
-            <Link href="/browse" className="primary-button">
+            <Link
+              href="/browse"
+              className="primary-button"
+            >
               Browse All Products
               <span>→</span>
             </Link>
 
-            <Link href="/login" className="secondary-button">
+            <Link
+              href="/login"
+              className="secondary-button"
+            >
               <span>▶</span>
               How It Works
             </Link>
@@ -163,6 +270,7 @@ export default function HomePage() {
           <div className="roblox-character">
             <div className="character-head">
               <div className="character-hair" />
+
               <div className="character-face">
                 <span className="eye left-eye" />
                 <span className="eye right-eye" />
@@ -171,7 +279,9 @@ export default function HomePage() {
             </div>
 
             <div className="character-body">
-              <div className="character-logo">R</div>
+              <div className="character-logo">
+                R
+              </div>
             </div>
 
             <div className="character-leg left-leg" />
@@ -189,6 +299,7 @@ export default function HomePage() {
 
             <div>
               <strong>100% Secure</strong>
+
               <p>
                 Your account is safe with our
                 verification system.
@@ -220,7 +331,9 @@ export default function HomePage() {
             >
               <div className="category-content">
 
-                <h3>{category.title}</h3>
+                <h3>
+                  {category.title}
+                </h3>
 
                 <p>
                   {category.description}
@@ -250,6 +363,7 @@ export default function HomePage() {
         </div>
 
         <div className="products-heading">
+
           <h2>
             Popular Right Now
           </h2>
@@ -258,6 +372,7 @@ export default function HomePage() {
             <button>←</button>
             <button>→</button>
           </div>
+
         </div>
 
         <div className="products-grid">
@@ -304,7 +419,10 @@ export default function HomePage() {
           </div>
 
           <div>
-            <h3>Safe & Secure</h3>
+            <h3>
+              Safe & Secure
+            </h3>
+
             <p>
               We use advanced verification systems
               to keep your account and purchases safe.
@@ -318,7 +436,10 @@ export default function HomePage() {
           </div>
 
           <div>
-            <h3>Instant Delivery</h3>
+            <h3>
+              Instant Delivery
+            </h3>
+
             <p>
               Most items are delivered quickly
               through our marketplace system.
@@ -332,7 +453,10 @@ export default function HomePage() {
           </div>
 
           <div>
-            <h3>24/7 Support</h3>
+            <h3>
+              24/7 Support
+            </h3>
+
             <p>
               Our support team is ready to help
               whenever you need assistance.
@@ -346,7 +470,10 @@ export default function HomePage() {
           </div>
 
           <div>
-            <h3>Trusted By Thousands</h3>
+            <h3>
+              Trusted By Thousands
+            </h3>
+
             <p>
               Join thousands of customers who
               use RBXMARKET.
@@ -387,7 +514,9 @@ export default function HomePage() {
         <div className="footer-brand">
 
           <Link href="/" className="brand">
-            <div className="brand-logo">R</div>
+            <div className="brand-logo">
+              R
+            </div>
 
             <div className="brand-text">
               RBX<span>MARKET</span>
@@ -409,7 +538,9 @@ export default function HomePage() {
         </div>
 
         <div className="footer-column">
-          <h3>Marketplace</h3>
+          <h3>
+            Marketplace
+          </h3>
 
           <Link href="/browse">
             Browse All
@@ -429,7 +560,9 @@ export default function HomePage() {
         </div>
 
         <div className="footer-column">
-          <h3>Info</h3>
+          <h3>
+            Info
+          </h3>
 
           <Link href="/login">
             How It Works
@@ -449,7 +582,9 @@ export default function HomePage() {
         </div>
 
         <div className="footer-column">
-          <h3>Support</h3>
+          <h3>
+            Support
+          </h3>
 
           <Link href="/support">
             Contact Us
@@ -465,7 +600,9 @@ export default function HomePage() {
         </div>
 
         <div className="footer-community">
-          <h3>Join Our Community</h3>
+          <h3>
+            Join Our Community
+          </h3>
 
           <p>
             Stay updated with the latest news,
@@ -487,6 +624,7 @@ export default function HomePage() {
       </footer>
 
       <div className="footer-bottom">
+
         <span>
           © 2026 RBXMARKET. All rights reserved.
         </span>
@@ -494,8 +632,10 @@ export default function HomePage() {
         <span>
           This website is not affiliated with Roblox Corporation.
         </span>
+
       </div>
 
     </main>
   );
 }
+```
