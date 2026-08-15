@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
+import crypto from "crypto";
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const supabaseSecretKey = process.env.SUPABASE_SECRET_KEY;
@@ -13,6 +14,13 @@ const supabase = createClient(
   supabaseSecretKey
 );
 
+function hashToken(token: string) {
+  return crypto
+    .createHash("sha256")
+    .update(token)
+    .digest("hex");
+}
+
 export async function POST(request: NextRequest) {
   try {
     const { userId, words } = await request.json();
@@ -20,8 +28,7 @@ export async function POST(request: NextRequest) {
     if (!userId || !Array.isArray(words) || words.length !== 8) {
       return NextResponse.json(
         {
-          error:
-            "User ID and exactly 8 words are required.",
+          error: "User ID and exactly 8 words are required.",
         },
         { status: 400 }
       );
@@ -57,7 +64,7 @@ export async function POST(request: NextRequest) {
       description.length > 0 &&
       description === expectedWords;
 
-    // Don't save anything if verification failed.
+    // Verification failed
     if (!verified) {
       return NextResponse.json({
         verified: false,
@@ -72,7 +79,7 @@ export async function POST(request: NextRequest) {
     const avatarUrl =
       `https://www.roblox.com/headshot-thumbnail/image?userId=${profile.id}&width=150&height=150&format=png`;
 
-    // Save verified account
+    // Save verified Roblox account
     const { error: databaseError } = await supabase
       .from("verified_users")
       .upsert(
@@ -103,7 +110,44 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    return NextResponse.json({
+    // --------------------------------------------------
+    // CREATE LOGIN SESSION
+    // --------------------------------------------------
+
+    const sessionToken = crypto.randomBytes(32).toString("hex");
+
+    const sessionTokenHash = hashToken(sessionToken);
+
+    // Session lasts 30 days
+    const expiresAt = new Date(
+      Date.now() + 30 * 24 * 60 * 60 * 1000
+    ).toISOString();
+
+    const { error: sessionError } = await supabase
+      .from("auth_sessions")
+      .insert({
+        session_token_hash: sessionTokenHash,
+        roblox_user_id: profile.id,
+        expires_at: expiresAt,
+      });
+
+    if (sessionError) {
+      console.error(
+        "Session database error:",
+        sessionError
+      );
+
+      return NextResponse.json(
+        {
+          error:
+            "Roblox was verified, but the login session could not be created.",
+        },
+        { status: 500 }
+      );
+    }
+
+    // Create response
+    const result = NextResponse.json({
       verified: true,
       username: profile.name,
       userId: profile.id,
@@ -111,8 +155,25 @@ export async function POST(request: NextRequest) {
       message:
         "✓ Roblox account successfully verified!",
     });
+
+    // Secure login cookie
+    result.cookies.set({
+      name: "rbx_session",
+      value: sessionToken,
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+      path: "/",
+      expires: new Date(expiresAt),
+    });
+
+    return result;
+
   } catch (error) {
-    console.error("Verification error:", error);
+    console.error(
+      "Verification error:",
+      error
+    );
 
     return NextResponse.json(
       {
