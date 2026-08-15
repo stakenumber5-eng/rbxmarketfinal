@@ -1,96 +1,75 @@
 import { NextRequest, NextResponse } from "next/server";
+import { createClient } from "@supabase/supabase-js";
 
-export async function GET(req: NextRequest) {
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+const supabaseSecretKey = process.env.SUPABASE_SECRET_KEY;
+
+if (!supabaseUrl || !supabaseSecretKey) {
+  throw new Error("Supabase environment variables are missing.");
+}
+
+const supabase = createClient(
+  supabaseUrl,
+  supabaseSecretKey
+);
+
+export async function GET(request: NextRequest) {
   try {
-    const username = req.nextUrl.searchParams.get("username");
+    const userId = request.cookies.get("rbx_verified_user")?.value;
 
-    if (!username) {
-      return NextResponse.json(
-        { error: "Username is required." },
-        { status: 400 }
-      );
+    if (!userId) {
+      return NextResponse.json({
+        loggedIn: false,
+        user: null,
+      });
     }
 
-    // Find the Roblox user by username
-    const userResponse = await fetch(
-      "https://users.roblox.com/v1/usernames/users",
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
+    const { data: user, error } = await supabase
+      .from("verified_users")
+      .select(
+        "roblox_user_id, username, avatar_url, verified"
+      )
+      .eq("roblox_user_id", userId)
+      .eq("verified", true)
+      .maybeSingle();
+
+    if (error) {
+      console.error("Supabase session lookup error:", error);
+
+      return NextResponse.json(
+        {
+          loggedIn: false,
+          user: null,
+          error: "Could not load saved account.",
         },
-        body: JSON.stringify({
-          usernames: [username],
-          excludeBannedUsers: false,
-        }),
-        cache: "no-store",
-      }
-    );
-
-    if (!userResponse.ok) {
-      return NextResponse.json(
-        { error: "Could not contact Roblox." },
-        { status: 502 }
+        { status: 500 }
       );
     }
-
-    const userData = await userResponse.json();
-    const user = userData.data?.[0];
 
     if (!user) {
-      return NextResponse.json(
-        { error: "Roblox user not found." },
-        { status: 404 }
-      );
-    }
-
-    // Get the user's public profile information
-    const profileResponse = await fetch(
-      `https://users.roblox.com/v1/users/${user.id}`,
-      {
-        cache: "no-store",
-      }
-    );
-
-    if (!profileResponse.ok) {
-      return NextResponse.json(
-        { error: "Could not get Roblox profile." },
-        { status: 502 }
-      );
-    }
-
-    const profile = await profileResponse.json();
-
-    // Get Roblox avatar
-    const avatarResponse = await fetch(
-      `https://thumbnails.roblox.com/v1/users/avatar-headshot?userIds=${user.id}&size=150x150&format=Png&isCircular=false`,
-      {
-        cache: "no-store",
-      }
-    );
-
-    let avatarUrl = null;
-
-    if (avatarResponse.ok) {
-      const avatarData = await avatarResponse.json();
-      avatarUrl = avatarData.data?.[0]?.imageUrl ?? null;
+      return NextResponse.json({
+        loggedIn: false,
+        user: null,
+      });
     }
 
     return NextResponse.json({
-      success: true,
+      loggedIn: true,
       user: {
-        id: user.id,
-        username: user.name,
-        displayName: user.displayName,
-        description: profile.description ?? "",
-        avatarUrl,
+        userId: user.roblox_user_id,
+        username: user.username,
+        avatarUrl: user.avatar_url,
       },
     });
   } catch (error) {
-    console.error("Roblox API error:", error);
+    console.error("Auth session error:", error);
 
     return NextResponse.json(
-      { error: "Something went wrong." },
+      {
+        loggedIn: false,
+        user: null,
+        error: "Something went wrong.",
+      },
       { status: 500 }
     );
   }
