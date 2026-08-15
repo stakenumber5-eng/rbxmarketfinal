@@ -1,888 +1,501 @@
 "use client";
 
-
-
-import { useState } from "react";
-
-
-
-type RobloxUser = {
-
-  username: string;
-
-  userId: number;
-
-  avatarUrl: string | null;
-
-};
-
-
-
-export default function LoginPage() {
-
-  const [username, setUsername] = useState("");
-
-  const [verificationCode, setVerificationCode] = useState("");
-
-  const [user, setUser] = useState<RobloxUser | null>(null);
-
-  const [verified, setVerified] = useState(false);
-
-  const [loading, setLoading] = useState(false);
-
-  const [message, setMessage] = useState("");
-
-
-
-  async function generateCode() {
-
-    const cleanUsername = username.trim();
-
-
-
-    if (!cleanUsername) {
-
-      setMessage("Enter your Roblox username first.");
-
-      return;
-
-    }
-
-
-
-    setLoading(true);
-
-    setMessage("");
-
-    setVerified(false);
-
-
-
-    try {
-
-      const response = await fetch("/api/roblox/start", {
-
-        method: "POST",
-
-        headers: {
-
-          "Content-Type": "application/json",
-
-        },
-
-        body: JSON.stringify({
-
-          username: cleanUsername,
-
-        }),
-
-      });
-
-
-
-      const data = await response.json();
-
-
-
-      if (!response.ok) {
-
-        throw new Error(
-
-          data.error || "Could not generate verification words."
-
-        );
-
-      }
-
-
-
-      if (!Array.isArray(data.words) || data.words.length !== 8) {
-
-        throw new Error(
-
-          "The server did not return exactly 8 verification words."
-
-        );
-
-      }
-
-
-
-      setVerificationCode(data.words.join(" "));
-
-
-
-      // Account found ≠ verified.
-
-      setUser({
-
-        username: data.username,
-
-        userId: data.userId,
-
-        avatarUrl: null,
-
-      });
-
-
-
-      setMessage(
-
-        "8 verification words generated. Add them to your Roblox About/Bio, then click Verify."
-
-      );
-
-    } catch (error) {
-
-      console.error("Generate verification error:", error);
-
-
-
-      setMessage(
-
-        error instanceof Error
-
-          ? error.message
-
-          : "Something went wrong."
-
-      );
-
-    } finally {
-
-      setLoading(false);
-
-    }
-
-  }
-
-
-
-  async function verifyAccount() {
-
-    if (!user) {
-
-      setMessage("Generate your verification words first.");
-
-      return;
-
-    }
-
-
-
-    if (!verificationCode) {
-
-      setMessage("Generate your 8 verification words first.");
-
-      return;
-
-    }
-
-
-
-    setLoading(true);
-
-    setMessage("");
-
-
-
-    try {
-
-      const response = await fetch("/api/roblox/verify", {
-
-        method: "POST",
-
-        headers: {
-
-          "Content-Type": "application/json",
-
-        },
-
-        body: JSON.stringify({
-
-          userId: user.userId,
-
-          words: verificationCode.split(/\s+/),
-
-        }),
-
-      });
-
-
-
-      const data = await response.json();
-
-
-
-      if (!response.ok) {
-
-        throw new Error(
-
-          data.error || "Verification failed."
-
-        );
-
-      }
-
-
-
-      // Verification failed.
-
-      if (!data.verified) {
-
-        setVerified(false);
-
-
-
-        setMessage(
-
-          "Verification failed. Make sure all 8 words are in your Roblox About/Bio."
-
-        );
-
-
-
-        return;
-
-      }
-
-
-
-      // ONLY successful verification reaches this point.
-
-      setVerified(true);
-
-
-
-      // Roblox avatar.
-
-      const avatarUrl =
-
-        `https://www.roblox.com/headshot-thumbnail/image?userId=${user.userId}&width=150&height=150&format=png`;
-
-
-
-      setUser({
-
-        username: data.username || user.username,
-
-        userId: data.userId || user.userId,
-
-        avatarUrl,
-
-      });
-
-
-
-      setMessage(
-
-        "✓ Roblox account successfully verified!"
-
-      );
-
-    } catch (error) {
-
-      console.error("Verification error:", error);
-
-
-
-      setVerified(false);
-
-
-
-      setMessage(
-
-        error instanceof Error
-
-          ? error.message
-
-          : "Something went wrong."
-
-      );
-
-    } finally {
-
-      setLoading(false);
-
-    }
-
-  }
-
-
-
-  function copyCode() {
-
-    if (!verificationCode) return;
-
-
-
-    navigator.clipboard.writeText(verificationCode);
-
-
-
-    setMessage("Verification words copied!");
-
-  }
-
-
-
+import Link from "next/link";
+
+const categories = [
+  {
+    title: "ROBUX",
+    description: "Buy Robux at the best prices.",
+    icon: "💰",
+    className: "category-robux",
+    href: "/browse?category=robux",
+  },
+  {
+    title: "ADOPT ME",
+    description: "Get your favorite pets & items.",
+    icon: "🐾",
+    className: "category-adopt",
+    href: "/browse?category=adopt-me",
+  },
+  {
+    title: "MM2",
+    description: "Knives, guns & godlys.",
+    icon: "🔪",
+    className: "category-mm2",
+    href: "/browse?category=mm2",
+  },
+];
+
+const products = [
+  {
+    name: "FR Frost Dragon",
+    category: "Adopt Me",
+    price: "$24.99",
+    icon: "🐉",
+  },
+  {
+    name: "Batwing",
+    category: "MM2",
+    price: "$14.99",
+    icon: "🦇",
+  },
+  {
+    name: "1,000 Robux",
+    category: "Robux",
+    price: "$8.99",
+    icon: "🪙",
+  },
+  {
+    name: "Candy Cannon",
+    category: "MM2",
+    price: "$4.99",
+    icon: "🍭",
+  },
+  {
+    name: "NFR Shadow Dragon",
+    category: "Adopt Me",
+    price: "$29.99",
+    icon: "🐲",
+  },
+  {
+    name: "2,200 Robux",
+    category: "Robux",
+    price: "$17.99",
+    icon: "💎",
+  },
+];
+
+export default function HomePage() {
   return (
+    <main className="home-page">
 
-    <main className="verify-page">
+      {/* NAVBAR */}
+      <header className="home-header">
+        <Link href="/" className="brand">
+          <div className="brand-logo">R</div>
 
-      {/* HEADER */}
-
-      <header className="verify-header">
-
-        <div className="verify-logo">
-
-          <span className="logo-mark">R</span>
-
-
-
-          <div>
-
-            <strong>
-
-              RBX<span>MARKET</span>
-
-            </strong>
-
-
-
-            <small>FINAL</small>
-
+          <div className="brand-text">
+            RBX<span>MARKET</span>
           </div>
+        </Link>
 
-        </div>
+        <nav className="home-nav">
+          <Link href="/" className="active">
+            Home
+          </Link>
 
+          <Link href="/browse">
+            Browse
+          </Link>
 
+          <Link href="/login">
+            How It Works
+          </Link>
 
-        <nav className="verify-nav">
+          <Link href="/reviews">
+            Reviews
+          </Link>
 
-          <a href="/">⌂ Home</a>
-
-          <a href="/">▢ Browse</a>
-
-          <a href="/login">♢ Safe & Trusted</a>
-
-          <a href="/">▱ Discord</a>
-
+          <Link href="/support">
+            Support
+          </Link>
         </nav>
 
+        <div className="header-actions">
+          <Link href="/login" className="login-button">
+            Login
+          </Link>
 
-
-        <a className="admin-button" href="/admin">
-
-          Admin Panel
-
-        </a>
-
+          <Link href="/login" className="verify-button">
+            🛡 Verify Roblox
+          </Link>
+        </div>
       </header>
 
+      {/* HERO */}
+      <section className="hero-section">
+        <div className="hero-glow" />
 
+        <div className="hero-content">
 
-      {/* MAIN */}
-
-      <section className="verify-container">
-
-        {/* LEFT SIDE */}
-
-        <div className="verify-content">
-
-          <div className="verify-title">
-
-            <div className="shield-icon">
-
-              ✓
-
-            </div>
-
-
-
-            <div>
-
-              <h1>
-
-                Verify your <span>Roblox</span> account
-
-              </h1>
-
-
-
-              <p>
-
-                Follow the steps below to verify your Roblox
-
-                account and unlock full access.
-
-              </p>
-
-            </div>
-
+          <div className="trusted-badge">
+            <span className="green-dot" />
+            Trusted by 10,000+ Roblox players
           </div>
 
-
-
-          <div className="divider" />
-
-
-
-          {/* STEP 1 */}
-
-          <section className="verify-step">
-
-            <div className="step-title">
-
-              <span className="step-number">
-
-                1
-
-              </span>
-
-
-
-              <h2>
-
-                Enter your Roblox username
-
-              </h2>
-
-            </div>
-
-
-
-            <input
-
-              className="username-input"
-
-              type="text"
-
-              placeholder="Roblox username"
-
-              value={username}
-
-              onChange={(e) =>
-
-                setUsername(e.target.value)
-
-              }
-
-              disabled={loading}
-
-            />
-
-
-
-            <button
-
-              className="red-button"
-
-              onClick={generateCode}
-
-              disabled={loading}
-
-            >
-
-              {loading
-
-                ? "Loading..."
-
-                : "◈ Generate 8 verification words"}
-
-            </button>
-
-          </section>
-
-
-
-          <div className="divider" />
-
-
-
-          {/* STEP 2 */}
-
-          <section className="verify-step">
-
-            <div className="step-title">
-
-              <span className="step-number">
-
-                2
-
-              </span>
-
-
-
-              <h2>
-
-                Add the words to your Roblox About/Bio
-
-              </h2>
-
-            </div>
-
-
-
-            <p className="step-description">
-
-              Copy the 8 words below and paste them
-
-              exactly into your Roblox profile About/Bio.
-
-            </p>
-
-
-
-            <div className="code-box">
-
-              <strong>
-
-                {verificationCode ||
-
-                  "Generate your verification words"}
-
-              </strong>
-
-
-
-              {verificationCode && (
-
-                <button
-
-                  type="button"
-
-                  onClick={copyCode}
-
-                  className="copy-button"
-
-                >
-
-                  ▣
-
-                </button>
-
-              )}
-
-            </div>
-
-
-
-            <p className="info-text">
-
-              ⓘ Make sure all 8 words are added to your
-
-              Roblox About/Bio.
-
-            </p>
-
-          </section>
-
-
-
-          <div className="divider" />
-
-
-
-          {/* STEP 3 */}
-
-          <section className="verify-step">
-
-            <div className="step-title">
-
-              <span className="step-number">
-
-                3
-
-              </span>
-
-
-
-              <h2>
-
-                Verify your account
-
-              </h2>
-
-            </div>
-
-
-
-            <p className="step-description">
-
-              After adding the words to your Roblox
-
-              About/Bio, click the button below to verify
-
-              ownership.
-
-            </p>
-
-
-
-            <button
-
-              className="verify-button"
-
-              onClick={verifyAccount}
-
-              disabled={
-
-                loading ||
-
-                !verificationCode ||
-
-                !user
-
-              }
-
-            >
-
-              {loading
-
-                ? "Checking Roblox..."
-
-                : "✓ Verify Roblox Account"}
-
-            </button>
-
-
-
-            {message && (
-
-              <p className="verify-message">
-
-                {message}
-
-              </p>
-
-            )}
-
-
-
-            <p className="security-note">
-
-              🔒 We never ask for your password. This is a{" "}
-
-              <span>secure</span> verification process.
-
-            </p>
-
-          </section>
-
+          <h1>
+            BUY SAFE.
+            <br />
+            PLAY <span>MORE.</span>
+          </h1>
+
+          <p>
+            The safe and fast marketplace to buy
+            <br />
+            Robux, Adopt Me pets, MM2 items and more.
+          </p>
+
+          <div className="hero-buttons">
+            <Link href="/browse" className="primary-button">
+              Browse All Products
+              <span>→</span>
+            </Link>
+
+            <Link href="/login" className="secondary-button">
+              <span>▶</span>
+              How It Works
+            </Link>
+          </div>
+
+          <div className="hero-features">
+            <span>⚡ Fast Delivery</span>
+            <span>🛡 Secure Trades</span>
+            <span>🎧 24/7 Support</span>
+          </div>
         </div>
 
+        {/* HERO VISUAL */}
+        <div className="hero-visual">
 
+          <div className="hero-circle hero-circle-one" />
+          <div className="hero-circle hero-circle-two" />
 
-        {/* RIGHT SIDE */}
+          <div className="roblox-character">
+            <div className="character-head">
+              <div className="character-hair" />
+              <div className="character-face">
+                <span className="eye left-eye" />
+                <span className="eye right-eye" />
+                <span className="smile" />
+              </div>
+            </div>
 
-        <aside className="verify-sidebar">
+            <div className="character-body">
+              <div className="character-logo">R</div>
+            </div>
 
+            <div className="character-leg left-leg" />
+            <div className="character-leg right-leg" />
+
+            <div className="character-sword">
+              ⚔
+            </div>
+          </div>
+
+          <div className="security-floating-card">
+            <div className="security-icon">
+              🛡
+            </div>
+
+            <div>
+              <strong>100% Secure</strong>
+              <p>
+                Your account is safe with our
+                verification system.
+              </p>
+            </div>
+          </div>
+
+        </div>
+      </section>
+
+      {/* CATEGORIES */}
+      <section className="categories-section">
+
+        <div className="section-label">
+          SHOP BY CATEGORY
+        </div>
+
+        <h2>
+          Explore Our Top Categories
+        </h2>
+
+        <div className="category-grid">
+
+          {categories.map((category) => (
+            <Link
+              href={category.href}
+              key={category.title}
+              className={`category-card ${category.className}`}
+            >
+              <div className="category-content">
+
+                <h3>{category.title}</h3>
+
+                <p>
+                  {category.description}
+                </p>
+
+                <span className="category-button">
+                  Shop {category.title}
+                  <b>→</b>
+                </span>
+
+              </div>
+
+              <div className="category-icon">
+                {category.icon}
+              </div>
+            </Link>
+          ))}
+
+        </div>
+      </section>
+
+      {/* PRODUCTS */}
+      <section className="products-section">
+
+        <div className="section-label">
+          FEATURED ITEMS
+        </div>
+
+        <div className="products-heading">
           <h2>
-
-            Verification Status
-
+            Popular Right Now
           </h2>
 
-
-
-          {/* STATUS */}
-
-          <div
-
-            className={`status-pill ${
-
-              verified ? "verified" : ""
-
-            }`}
-
-          >
-
-            {verified
-
-              ? "✓ Verified"
-
-              : "Not Verified"}
-
+          <div className="slider-buttons">
+            <button>←</button>
+            <button>→</button>
           </div>
+        </div>
 
+        <div className="products-grid">
 
-
-          {/* AVATAR */}
-
-          <div className="avatar-container">
-
-            {verified && user?.avatarUrl ? (
-
-              <img
-
-                src={user.avatarUrl}
-
-                alt={`${user.username} Roblox avatar`}
-
-              />
-
-            ) : (
-
-              <div className="empty-avatar">
-
-                R
-
+          {products.map((product) => (
+            <Link
+              href="/browse"
+              className="product-card"
+              key={product.name}
+            >
+              <div className="product-image">
+                <span>
+                  {product.icon}
+                </span>
               </div>
 
-            )}
+              <div className="product-info">
 
-          </div>
-
-
-
-          {/* USER INFO */}
-
-          {user ? (
-
-            <>
-
-              <h3>
-
-                {user.username}
-
-              </h3>
-
-
-
-              <p>
-
-                {verified
-
-                  ? "Roblox account verified"
-
-                  : "Roblox account found"}
-
-              </p>
-
-            </>
-
-          ) : (
-
-            <>
-
-              <h3>
-
-                No user selected
-
-              </h3>
-
-
-
-              <p>
-
-                Enter your Roblox username to get started.
-
-              </p>
-
-            </>
-
-          )}
-
-
-
-          {/* SECURITY */}
-
-          <div className="security-card">
-
-            <div className="security-item">
-
-              <span>🛡</span>
-
-
-
-              <div>
-
-                <strong>
-
-                  Secure & Private
-
-                </strong>
-
-
+                <h3>
+                  {product.name}
+                </h3>
 
                 <p>
-
-                  We only check your public About/Bio.
-
+                  {product.category}
                 </p>
-
-              </div>
-
-            </div>
-
-
-
-            <div className="security-item">
-
-              <span>🔒</span>
-
-
-
-              <div>
 
                 <strong>
-
-                  No Password Required
-
+                  {product.price}
                 </strong>
 
-
-
-                <p>
-
-                  Your account stays completely safe.
-
-                </p>
-
               </div>
+            </Link>
+          ))}
 
-            </div>
+        </div>
+      </section>
 
+      {/* BENEFITS */}
+      <section className="benefits-section">
 
-
-            <div className="security-item">
-
-              <span>✓</span>
-
-
-
-              <div>
-
-                <strong>
-
-                  Trusted Verification
-
-                </strong>
-
-
-
-                <p>
-
-                  Verify ownership without sharing
-
-                  credentials.
-
-                </p>
-
-              </div>
-
-            </div>
-
+        <div className="benefit">
+          <div className="benefit-icon">
+            🛡
           </div>
 
-        </aside>
+          <div>
+            <h3>Safe & Secure</h3>
+            <p>
+              We use advanced verification systems
+              to keep your account and purchases safe.
+            </p>
+          </div>
+        </div>
+
+        <div className="benefit">
+          <div className="benefit-icon">
+            ⚡
+          </div>
+
+          <div>
+            <h3>Instant Delivery</h3>
+            <p>
+              Most items are delivered quickly
+              through our marketplace system.
+            </p>
+          </div>
+        </div>
+
+        <div className="benefit">
+          <div className="benefit-icon">
+            🎧
+          </div>
+
+          <div>
+            <h3>24/7 Support</h3>
+            <p>
+              Our support team is ready to help
+              whenever you need assistance.
+            </p>
+          </div>
+        </div>
+
+        <div className="benefit">
+          <div className="benefit-icon">
+            👥
+          </div>
+
+          <div>
+            <h3>Trusted By Thousands</h3>
+            <p>
+              Join thousands of customers who
+              use RBXMARKET.
+            </p>
+          </div>
+        </div>
 
       </section>
 
+      {/* STATS */}
+      <section className="stats-section">
+
+        <div className="stat">
+          <strong>10,000+</strong>
+          <span>Happy Customers</span>
+        </div>
+
+        <div className="stat">
+          <strong>50,000+</strong>
+          <span>Orders Completed</span>
+        </div>
+
+        <div className="stat">
+          <strong>99.9%</strong>
+          <span>Positive Reviews</span>
+        </div>
+
+        <div className="stat">
+          <strong>24/7</strong>
+          <span>Customer Support</span>
+        </div>
+
+      </section>
+
+      {/* FOOTER */}
+      <footer className="home-footer">
+
+        <div className="footer-brand">
+
+          <Link href="/" className="brand">
+            <div className="brand-logo">R</div>
+
+            <div className="brand-text">
+              RBX<span>MARKET</span>
+            </div>
+          </Link>
+
+          <p>
+            The #1 Roblox marketplace to buy
+            Robux, Adopt Me pets, MM2 items and more.
+          </p>
+
+          <div className="socials">
+            <span>◉</span>
+            <span>𝕏</span>
+            <span>▶</span>
+            <span>♪</span>
+          </div>
+
+        </div>
+
+        <div className="footer-column">
+          <h3>Marketplace</h3>
+
+          <Link href="/browse">
+            Browse All
+          </Link>
+
+          <Link href="/browse?category=robux">
+            Robux
+          </Link>
+
+          <Link href="/browse?category=adopt-me">
+            Adopt Me
+          </Link>
+
+          <Link href="/browse?category=mm2">
+            MM2
+          </Link>
+        </div>
+
+        <div className="footer-column">
+          <h3>Info</h3>
+
+          <Link href="/login">
+            How It Works
+          </Link>
+
+          <Link href="/terms">
+            Terms of Service
+          </Link>
+
+          <Link href="/privacy">
+            Privacy Policy
+          </Link>
+
+          <Link href="/refunds">
+            Refund Policy
+          </Link>
+        </div>
+
+        <div className="footer-column">
+          <h3>Support</h3>
+
+          <Link href="/support">
+            Contact Us
+          </Link>
+
+          <Link href="/faq">
+            FAQ
+          </Link>
+
+          <Link href="/delivery">
+            Delivery Info
+          </Link>
+        </div>
+
+        <div className="footer-community">
+          <h3>Join Our Community</h3>
+
+          <p>
+            Stay updated with the latest news,
+            deals and giveaways.
+          </p>
+
+          <div className="email-box">
+            <input
+              type="email"
+              placeholder="Enter your email"
+            />
+
+            <button>
+              →
+            </button>
+          </div>
+        </div>
+
+      </footer>
+
+      <div className="footer-bottom">
+        <span>
+          © 2026 RBXMARKET. All rights reserved.
+        </span>
+
+        <span>
+          This website is not affiliated with Roblox Corporation.
+        </span>
+      </div>
+
     </main>
-
   );
-
 }
-
